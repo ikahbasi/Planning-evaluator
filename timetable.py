@@ -29,22 +29,24 @@ class Day:
     def handel_interference(self):
         self._list_plans()
         for indx, plan in enumerate(self.plans):
+            if indx == 0:
+                continue
             try:
                 if (plan.stime < self.plans[indx-1].etime) or (plan.etime > self.plans[indx+1].stime):
-                    plan.offset = self.plans[indx-1] + 0.01
+                    plan.offset = self.plans[indx-1].offset + 0.05
                 # if (self.lst_stimes[ii] < self.lst_etimes[ii-1]) or (self.lst_etimes[ii] > self.lst_stimes[ii+1]):
                 #     self.plan[self.lst_works[ii]].offset = offset
             except Exception as error:
                 print(error)
             
             
-    def pie_plot(self):
+    def pie_plot(self, colors=None):
         dic = {plan.name: (plan.etime-plan.stime).seconds / (24*3600) for plan in self.plans}
         # print(dic)
         fig, ax = plt.subplots(figsize=(8, 8))
         plt.title(self.day_name)
         ax.pie(dic.values(), labels=dic.keys(), autopct='%1.1f%%',
-                startangle=270, normalize=False)
+                startangle=270, normalize=False, colors=colors)
         plt.show()
 
 
@@ -71,31 +73,30 @@ class Week:
         self.listing_all_works()
         cmap = plt.cm.get_cmap('hsv', len(self.lst_works))    # 11 discrete colors
         # cmap = plt.cm.get_cmap('Spectral')
-        cmap = {action:cmap(indx) for indx, action in enumerate(self.lst_works)}
-        self.color_patch = [mpatches.Patch(color=color, label=action) for action, color in cmap.items()]
-        return cmap
+        self.cmap = {action:cmap(indx) for indx, action in enumerate(self.lst_works)}
+        self.color_patch = [mpatches.Patch(color=color, label=action) for action, color in self.cmap.items()]
                 
     def plot_timetable(self):
         import matplotlib.dates as mdates
-        fig, ax = plt.subplots(figsize=(10, 5))
-        cmap = self.mk_cmap_actions()
+        fig, ax = plt.subplots(figsize=(10, 7))
+        self.mk_cmap_actions()
         for name, day in self.__dict__.items():
             if not isinstance(day, Day):
                 continue
+            y = day.day_number
+            plt.plot_date((Time(day=1, hour=0, minute=0, second=0, year=2023, month=1),
+                           Time(day=1, hour=23, minute=59, second=0, year=2023, month=1)),
+                          (y, y),
+                          linewidth=1, c='k',
+                          fmt=':')
             day.handel_interference()
-            # print(name, day.day_name)
             for plan in day.plans:
-                # print(plan.name, plan.stime, plan.etime)
-                y = day.day_number
-                # plt.plot((plan.stime, plan.etime),
-                #           (y+plan.offset, y+plan.offset),
-                #           linewidth=20, c=cmap[plan.name])
                 plt.plot_date((plan.stime, plan.etime),
                               (y+plan.offset, y+plan.offset),
-                              linewidth=2, c=cmap[plan.name],
+                              linewidth=3, c=self.cmap[plan.name],
                               fmt='-', label=plan.name)
                 plt.text(plan.stime,
-                          y+0.05,
+                          y+plan.offset+0.05,
                           plan.name,
                           # horizontalalignment='right',
                           # verticalalignment='center',
@@ -122,7 +123,8 @@ class Week:
     def pie_plot(self):
         for name, day in self.__dict__.items():
             print(name, day.day_name)
-            day.pie_plot()
+            colors = [self.cmap[plan.name] for plan in day.plans]
+            day.pie_plot(colors=colors)
 
 
     def update_routine(self, routine, except_day=[]):
