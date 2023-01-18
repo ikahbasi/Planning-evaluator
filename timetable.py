@@ -1,6 +1,6 @@
 from datetime import datetime as dt
 import matplotlib.pyplot as plt
-
+import matplotlib.patches as mpatches 
 
 
 def Time(hour, minute, second, year=2023, month=1, day=1):
@@ -8,7 +8,8 @@ def Time(hour, minute, second, year=2023, month=1, day=1):
 
 
 class ToDo:
-    def __init__(self, stime, etime):
+    def __init__(self, name, stime, etime):
+        self.name = name
         self.stime = Time(*stime)
         self.etime = Time(*etime)
         self.offset = 0
@@ -18,40 +19,29 @@ class Day:
     def __init__(self, day_name, day_number):
         self.day_name = day_name
         self.day_number = day_number
-        self.plan = {}
-    def _list_time(self):
-        self.lst_stimes = []
-        self.lst_etimes = []
-        self.lst_works  = []
-        for key, val in self.plan.items():
-            self.lst_stimes.append(val.stime)
-            self.lst_etimes.append(val.etime)
-            self.lst_works.append(key)
+        self.plans = []
+
+    def _list_plans(self):
+        self.lst_stimes = [plan.stime for plan in self.plans]
+        self.lst_etimes = [plan.etime for plan in self.plans]
+        self.lst_works  = [plan.name for plan in self.plans]
+
     def handel_interference(self):
-        self._list_time()
-        offset = 0.1
-        print(self.lst_etimes)
-        print(self.lst_stimes)
-        for ii in range(len(self.lst_works)):
+        self._list_plans()
+        for indx, plan in enumerate(self.plans):
             try:
-                if (self.lst_stimes[ii] < self.lst_etimes[ii-1]) or (self.lst_etimes[ii] > self.lst_stimes[ii+1]):
-                    self.plan[self.lst_works[ii]].offset = offset
-            except:
-                pass
-            # self.interface1 = [val.stime < etime for etime in self.lst_etimes]
-            # self.interface2 = [val.etime > stime for stime in self.lst_stimes]
-            # if any(self.interface1) or any(self.interface2):
-                # offset += 0.1
-                # val.offset = offset
+                if (plan.stime < self.plans[indx-1].etime) or (plan.etime > self.plans[indx+1].stime):
+                    plan.offset = self.plans[indx-1] + 0.01
+                # if (self.lst_stimes[ii] < self.lst_etimes[ii-1]) or (self.lst_etimes[ii] > self.lst_stimes[ii+1]):
+                #     self.plan[self.lst_works[ii]].offset = offset
+            except Exception as error:
+                print(error)
             
             
-    def plot(self):
-        dic = {name: (time.etime-time.stime).seconds / (24*3600) for name, time in self.plan.items()}
-        print(dic)
-        # fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-        # wedges, texts, autotexts = ax.pie(dic.values(), autopct=dic.keys(),
-        #                                   textprops=dict(color="w"))
-        fig, ax = plt.subplots()
+    def pie_plot(self):
+        dic = {plan.name: (plan.etime-plan.stime).seconds / (24*3600) for plan in self.plans}
+        # print(dic)
+        fig, ax = plt.subplots(figsize=(8, 8))
         plt.title(self.day_name)
         ax.pie(dic.values(), labels=dic.keys(), autopct='%1.1f%%',
                 startangle=270, normalize=False)
@@ -68,67 +58,80 @@ class Week:
         self.Thursday = Day('Thursday', 5)
         self.Friday = Day('Friday', 6)
         
-    def listing_actions(self):
-        listactions = []
+    def listing_all_works(self):
+        self.lst_works = set()
         for name, day in self.__dict__.items():
-            for action, time in day.plan.items():
-                listactions.append(action)
-        return listactions
+            print(day)
+            if isinstance(day, Day):
+                day._list_plans()
+                self.lst_works.update(day.lst_works)
+        self.lst_works = list(self.lst_works)
     
     def mk_cmap_actions(self):
-        actions = list(set(self.listing_actions()))
-        cmap = plt.cm.get_cmap('PiYG', len(actions))    # 11 discrete colors
+        self.listing_all_works()
+        cmap = plt.cm.get_cmap('hsv', len(self.lst_works))    # 11 discrete colors
         # cmap = plt.cm.get_cmap('Spectral')
-        cmap = {action:cmap(indx) for indx, action in enumerate(actions)}
+        cmap = {action:cmap(indx) for indx, action in enumerate(self.lst_works)}
+        self.color_patch = [mpatches.Patch(color=color, label=action) for action, color in cmap.items()]
         return cmap
                 
-    def plot(self):
+    def plot_timetable(self):
         import matplotlib.dates as mdates
-        fig, ax = plt.subplots(figsize=(10, 7))
+        fig, ax = plt.subplots(figsize=(10, 5))
         cmap = self.mk_cmap_actions()
         for name, day in self.__dict__.items():
+            if not isinstance(day, Day):
+                continue
             day.handel_interference()
-            print(name, day.day_name)
-            for action, time in day.plan.items():
-                print(action, time)
+            # print(name, day.day_name)
+            for plan in day.plans:
+                # print(plan.name, plan.stime, plan.etime)
                 y = day.day_number
-                plt.plot((time.stime, time.etime), (y+time.offset, y+time.offset), linewidth=20, c=cmap[action])
-                plt.text(time.stime,
-                          y+time.offset,
-                          action,
-                           horizontalalignment='right',
-                          verticalalignment='center',
+                # plt.plot((plan.stime, plan.etime),
+                #           (y+plan.offset, y+plan.offset),
+                #           linewidth=20, c=cmap[plan.name])
+                plt.plot_date((plan.stime, plan.etime),
+                              (y+plan.offset, y+plan.offset),
+                              linewidth=2, c=cmap[plan.name],
+                              fmt='-', label=plan.name)
+                plt.text(plan.stime,
+                          y+0.05,
+                          plan.name,
+                          # horizontalalignment='right',
+                          # verticalalignment='center',
                           rotation=90,
                           # c=cmap[action],
                           # backgroundcolor='k',
                           size='x-small'
                           )
-                # plt.hlines(y=self.Saturday.day_number,
-                #            xmin=time.stime,
-                #            xmax=time.etime,
-                #            linewidth=2, label=action)
-        # plt.legend()
-        # beautify the x-labels
         plt.gcf().autofmt_xdate()
         myFmt = mdates.DateFormatter('%H:%M')
         plt.gca().xaxis.set_major_formatter(myFmt)
         # beautify the Y-labels
-        ylabels = [name for name, day in self.__dict__.items()]
+        ylabels = [name for name, day in self.__dict__.items() if isinstance(day, Day)]
+        # print(ylabels)
         ax.set_yticks(range(7))
         ax.set_yticklabels(ylabels, minor=False, rotation=0)
-        # plt.xlim([Time(day=1, hour=0, minute=0, second=0, year=2023, month=1),
-        #           Time(day=1, hour=23, minute=59, second=0, year=2023, month=1)])
+        plt.xlim([Time(day=1, hour=0, minute=0, second=0, year=2023, month=1),
+                  Time(day=1, hour=23, minute=59, second=0, year=2023, month=1)])
+        plt.legend(handles=self.color_patch, bbox_to_anchor=(1, 1))
+        plt.tight_layout()
         plt.show()
-    def pie(self):
+
+
+    def pie_plot(self):
         for name, day in self.__dict__.items():
             print(name, day.day_name)
-            day.plot()
-            
+            day.pie_plot()
+
+
     def update_routine(self, routine, except_day=[]):
         for name, day in self.__dict__.items():
             if name in except_day:
                 continue
-            day.plan.update(routine)
-    def update_plans(self, plans):
-        for keys, vals in plans.items():
-            self.__dict__[keys].plan.update(vals)
+            day.plans += routine
+
+
+    def update_plans(self, newplans):
+        for keys, vals in newplans.items():
+            self.__dict__[keys].plans += vals
