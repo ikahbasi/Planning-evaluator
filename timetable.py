@@ -51,10 +51,84 @@ class Day:
         # fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
         # wedges, texts, autotexts = ax.pie(dic.values(), autopct=dic.keys(),
         #                                   textprops=dict(color="w"))
-        
         fig, ax = plt.subplots()
         plt.title(self.day_name)
         ax.pie(dic.values(), labels=dic.keys(), autopct='%1.1f%%',
                 startangle=270, normalize=False)
-
         plt.show()
+
+
+class Week:
+    def __init__(self):
+        self.Saturday = Day('Saturday', 0)
+        self.Sunday = Day('Sunday', 1)
+        self.Monday = Day('Monday', 2)
+        self.Tuesday = Day('Tuesday', 3)
+        self.Wednesday = Day('Wednesday', 4)
+        self.Thursday = Day('Thursday', 5)
+        self.Friday = Day('Friday', 6)
+        
+    def listing_actions(self):
+        listactions = []
+        for name, day in self.__dict__.items():
+            for action, time in day.plan.items():
+                listactions.append(action)
+        return listactions
+    
+    def mk_cmap_actions(self):
+        actions = list(set(self.listing_actions()))
+        cmap = plt.cm.get_cmap('PiYG', len(actions))    # 11 discrete colors
+        # cmap = plt.cm.get_cmap('Spectral')
+        cmap = {action:cmap(indx) for indx, action in enumerate(actions)}
+        return cmap
+                
+    def plot(self):
+        import matplotlib.dates as mdates
+        fig, ax = plt.subplots(figsize=(10, 7))
+        cmap = self.mk_cmap_actions()
+        for name, day in self.__dict__.items():
+            day.handel_interference()
+            print(name, day.day_name)
+            for action, time in day.plan.items():
+                print(action, time)
+                y = day.day_number
+                plt.plot((time.stime, time.etime), (y+time.offset, y+time.offset), linewidth=20, c=cmap[action])
+                plt.text(time.stime,
+                          y+time.offset,
+                          action,
+                           horizontalalignment='right',
+                          verticalalignment='center',
+                          rotation=90,
+                          # c=cmap[action],
+                          # backgroundcolor='k',
+                          size='x-small'
+                          )
+                # plt.hlines(y=self.Saturday.day_number,
+                #            xmin=time.stime,
+                #            xmax=time.etime,
+                #            linewidth=2, label=action)
+        # plt.legend()
+        # beautify the x-labels
+        plt.gcf().autofmt_xdate()
+        myFmt = mdates.DateFormatter('%H:%M')
+        plt.gca().xaxis.set_major_formatter(myFmt)
+        # beautify the Y-labels
+        ylabels = [name for name, day in self.__dict__.items()]
+        ax.set_yticks(range(7))
+        ax.set_yticklabels(ylabels, minor=False, rotation=0)
+        # plt.xlim([Time(day=1, hour=0, minute=0, second=0, year=2023, month=1),
+        #           Time(day=1, hour=23, minute=59, second=0, year=2023, month=1)])
+        plt.show()
+    def pie(self):
+        for name, day in self.__dict__.items():
+            print(name, day.day_name)
+            day.plot()
+            
+    def update_routine(self, routine, except_day=[]):
+        for name, day in self.__dict__.items():
+            if name in except_day:
+                continue
+            day.plan.update(routine)
+    def update_plans(self, plans):
+        for keys, vals in plans.items():
+            self.__dict__[keys].plan.update(vals)
