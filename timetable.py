@@ -3,19 +3,24 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches 
 import pandas as pd
 
-def Time(hour, minute, second, year=2023, month=1, day=1):
-    return dt(year, month, day, hour, minute, second)
+def Time(time, date='2023-01-01'):
+    datetime_str = f'{date} {time}'
+    return dt.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
 
 
 class ToDo:
     def __init__(self, name, stime, etime):
         self.name = name
-        self.stime = Time(*stime)
-        self.etime = Time(*etime)
+        self.stime = Time(stime)
+        self.etime = Time(etime)
         self.offset = 0
 
 def formattxt_pie(pct):
     hr = pct / 100 * 24
+    return f'{pct:.1f}% ({hr:.1f} hr)'
+
+def formattxt_pie_week(pct):
+    hr = pct / 100 * 24 * 7
     return f'{pct:.1f}% ({hr:.1f} hr)'
 
 class Day:
@@ -76,7 +81,10 @@ class Day:
     
     def _sort_plans(self):
         self.plans = sorted(self.plans, key=lambda plan: plan.stime)
-
+        
+    def add_action(self, name, stime, etime):
+        action = ToDo(name, stime, etime)
+        self.plans.append(action)
 
 class Week:
     def __init__(self):
@@ -112,8 +120,7 @@ class Week:
             if not isinstance(day, Day):
                 continue
             y = day.day_number
-            plt.plot_date((Time(day=1, hour=0, minute=0, second=0, year=2023, month=1),
-                           Time(day=1, hour=23, minute=59, second=0, year=2023, month=1)),
+            plt.plot_date((Time('00:00:00'), Time('23:59:59')),
                           (y, y),
                           linewidth=1, c='k',
                           fmt=':')
@@ -142,8 +149,7 @@ class Week:
         # print(ylabels)
         ax.set_yticks(range(7))
         ax.set_yticklabels(ylabels, minor=False, rotation=0)
-        plt.xlim([Time(day=1, hour=0, minute=0, second=0, year=2023, month=1),
-                  Time(day=1, hour=23, minute=59, second=0, year=2023, month=1)])
+        plt.xlim([Time('00:00:00'), Time('23:59:59')])
         plt.legend(handles=self.color_patch, bbox_to_anchor=(1, 1))
         plt.tight_layout()
         plt.show()
@@ -154,19 +160,53 @@ class Week:
             if isinstance(day, Day):
                 colors = [self.cmap[plan.name] for plan in day.plans]
                 day.pie_plot(colors=colors)
+    
+    
+    def weekly_pie_plot(self):
+        works = {}
+        for name, day in self.__dict__.items():
+            if isinstance(day, Day):
+                for plan in day.plans:
+                    if plan.name not in works.keys():
+                        works[plan.name] = (plan.etime-plan.stime).seconds / (7*24*3600)
+                    else:
+                        works[plan.name] += (plan.etime-plan.stime).seconds / (7*24*3600)
+        # cmap = plt.cm.get_cmap('Spectral')
+        names = works.keys()
+        times = works.values()
+        colors = [self.cmap[name] for name in names]
+        free_time = 1 - sum(times)
+        works.update({'Free Time': free_time})
+        #
+        fig, ax = plt.subplots(figsize=(8, 8))
+        plt.title('All Week')
+        patches, labels, pct_texts = ax.pie(
+            times, labels=names,
+            autopct=lambda pct: formattxt_pie_week(pct),#'%1.1f%%',
+            startangle=90, normalize=False, colors=colors+[(0.8, 1, 1)], rotatelabels=True,
+            pctdistance=0.7)
+        for label, pct_text in zip(labels, pct_texts):
+            rotation = label.get_rotation()
+            pct_text.set_rotation(rotation)
+        plt.show()
+        
+        
 
 
-    def update_routine(self, routine, except_day=[]):
+    def update_routine(self, routines, except_day=[]):
         for name, day in self.__dict__.items():
             if name in except_day:
                 continue
-            day.plans += routine
+            for action in routines:
+                day.add_action(*action)
         self._sort_plans()
 
 
-    def update_plans(self, newplans):
-        for keys, vals in newplans.items():
-            self.__dict__[keys].plans += vals
+    def update_plans(self, newplans, target_day=[]):
+        for name, day in self.__dict__.items():
+            if name in target_day:
+                for action in newplans:
+                    day.add_action(*action)
         self._sort_plans()
 
     

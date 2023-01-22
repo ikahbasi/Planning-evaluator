@@ -1,24 +1,40 @@
-from timetable import ToDo, Week
+from timetable import Week
 
-daily_routine = [ToDo('Sleep', (0, 0, 0), (6, 45, 0)),
-                 ToDo('Weakup', (6, 45, 0), (7, 00, 0)),
-                 ToDo('Breakfast 1', (7, 00, 0), (7, 30, 0)),
-                 ToDo('Go out', (7, 30, 0), (9, 00, 0)),
-                 ToDo('breakfast 2', (9, 00, 0), (9, 15, 0)),
-                 ToDo('launch', (12, 45, 0), (13, 45, 0)),
-                 ToDo('Tea time', (15, 30, 0), (16, 30, 0)),
-                 ToDo('go back', (18, 00, 0), (19, 30, 0)),
-                 ToDo('rest', (19, 30, 0), (20, 30, 0)),
-                 ToDo('Dinner', (20, 30, 0), (21, 00, 0)),
-                 ToDo('BUSUU', (21, 00, 0), (23, 59, 0)),
+daily_routine1 = [('Sleep', '00:00:00', '06:45:00'),
+                  ('Weakup', '06:45:00', '07:00:00'),
+                  ('Breakfast 1', '07:00:00', '07:30:00'),
+                  ('Breakfast 2', '09:00:00', '09:15:00'),
+                  ('Launch', '12:45:00', '13:45:00'),
+                  ('Tea time', '15:30:00', '16:30:00'),
+                  ('Dinner', '20:30:00', '21:00:00'),
+                  ('BUSUU', '21:00:00', '22:00:00'),
+                  ]
+
+daily_routine2 = [('Go out', '07:30:00', '09:00:00'),
+                 ('Go back', '18:00:00', '19:30:00'),
+                 ('Rest', '19:30:00', '20:30:00')
                  ]
 
-study_routine = [ToDo('Learning DL', (9, 30, 0), (10, 30, 0)),
-                 ToDo('Busuu', (22, 0, 0), (22, 30, 0)),
-                ]
+
+# study_routine = [('Learning DL', (9, 30, 0), (10, 30, 0)),
+#                 ]
+
+# python_class = [('Python Class', (10, 0, 0), (12, 00, 0)),
+#                 ('Python Class', (20, 0, 0), (22, 00, 0)),
+#                 ('Python Class', (16, 0, 0), (18, 00, 0)),]
+
+
+# entertainment = [('go out', (10, 0, 0), (12, 00, 0)),
+#                  ('Python Class', (20, 0, 0), (22, 00, 0)),
+#                  ('Python Class', (16, 0, 0), (18, 00, 0)),]
+
 
 week = Week()
-week.update_routine(daily_routine, except_day=['Thursday', 'Friday'])
-week.update_routine(study_routine)
+week.update_routine(daily_routine1, except_day=[])
+week.update_routine(daily_routine2, except_day=['Thursday', 'Friday'])
+# week.update_plans(python_class, target_day=['Friday'])
+# week.Monday.add_plan('4 Friends', ())
+# week.update_routine(study_routine)
 week.plot_timetable()
 week.pie_plot()
+week.weekly_pie_plot()
