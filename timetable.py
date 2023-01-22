@@ -36,10 +36,11 @@ class Day:
                 continue
             try:
                 if (plan.stime < self.plans[indx-1].etime) or (plan.etime > self.plans[indx+1].stime):
+                    print(plan.name, plan.offset, plan.stime, plan.etime)
                     plan.offset = self.plans[indx-1].offset + 0.05
                 # if (self.lst_stimes[ii] < self.lst_etimes[ii-1]) or (self.lst_etimes[ii] > self.lst_stimes[ii+1]):
                 #     self.plan[self.lst_works[ii]].offset = offset
-            except Exception as error:
+            except IndexError as error:
                 print(error)
             
             
@@ -69,6 +70,9 @@ class Day:
         txt = self.day_name + '\n'
         txt += self.makedf().to_string()
         return txt
+    
+    def _sort_plans(self):
+        self.plans = sorted(self.plans, key=lambda plan: plan.stime)
 
 
 class Week:
@@ -84,7 +88,7 @@ class Week:
     def listing_all_works(self):
         self.lst_works = set()
         for name, day in self.__dict__.items():
-            print(day)
+            # print(day)
             if isinstance(day, Day):
                 day._list_plans()
                 self.lst_works.update(day.lst_works)
@@ -112,6 +116,7 @@ class Week:
                           fmt=':')
             day.handel_interference()
             for plan in day.plans:
+                # print('plot', plan.name, plan.offset)
                 plt.plot_date((plan.stime, plan.etime),
                               (y+plan.offset, y+plan.offset),
                               linewidth=3, c=self.cmap[plan.name],
@@ -143,9 +148,9 @@ class Week:
 
     def pie_plot(self):
         for name, day in self.__dict__.items():
-            print(name, day.day_name)
-            colors = [self.cmap[plan.name] for plan in day.plans]
-            day.pie_plot(colors=colors)
+            if isinstance(day, Day):
+                colors = [self.cmap[plan.name] for plan in day.plans]
+                day.pie_plot(colors=colors)
 
 
     def update_routine(self, routine, except_day=[]):
@@ -153,8 +158,15 @@ class Week:
             if name in except_day:
                 continue
             day.plans += routine
+        self._sort_plans()
 
 
     def update_plans(self, newplans):
         for keys, vals in newplans.items():
             self.__dict__[keys].plans += vals
+        self._sort_plans()
+
+    
+    def _sort_plans(self):
+        for name, day in self.__dict__.items():
+            day._sort_plans()
