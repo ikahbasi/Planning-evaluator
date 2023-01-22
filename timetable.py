@@ -14,6 +14,9 @@ class ToDo:
         self.etime = Time(*etime)
         self.offset = 0
 
+def formattxt_pie(pct):
+    hr = pct / 100 * 24
+    return f'{pct:.1f}% ({hr:.1f} hr)'
 
 class Day:
     def __init__(self, day_name, day_number):
@@ -45,8 +48,14 @@ class Day:
         # print(dic)
         fig, ax = plt.subplots(figsize=(8, 8))
         plt.title(self.day_name)
-        ax.pie(dic.values(), labels=dic.keys(), autopct='%1.1f%%',
-                startangle=270, normalize=False, colors=colors)
+        patches, labels, pct_texts = ax.pie(
+            dic.values(), labels=dic.keys(),
+            autopct=lambda pct: formattxt_pie(pct),#'%1.1f%%',
+            startangle=90, normalize=False, colors=colors, rotatelabels=True,
+            pctdistance=0.7)
+        for label, pct_text in zip(labels, pct_texts):
+            rotation = label.get_rotation()
+            pct_text.set_rotation(rotation)
         plt.show()
 
 
