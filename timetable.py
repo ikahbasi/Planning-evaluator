@@ -1,7 +1,7 @@
 from datetime import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches 
-
+import pandas as pd
 
 def Time(hour, minute, second, year=2023, month=1, day=1):
     return dt(year, month, day, hour, minute, second)
@@ -57,6 +57,18 @@ class Day:
             rotation = label.get_rotation()
             pct_text.set_rotation(rotation)
         plt.show()
+
+    def makedf(self):
+        #
+        dictionary = {'name': [plan.name for plan in self.plans],
+                      'Start Time': [plan.stime.strftime("%H:%M:%S") for plan in self.plans],
+                      'End Time': [plan.etime.strftime("%H:%M:%S") for plan in self.plans]}
+        df = pd.DataFrame(dictionary)
+        return df
+    def __str__(self):
+        txt = self.day_name + '\n'
+        txt += self.makedf().to_string()
+        return txt
 
 
 class Week:
