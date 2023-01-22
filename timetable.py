@@ -46,13 +46,16 @@ class Day:
             
     def pie_plot(self, colors=None):
         dic = {plan.name: (plan.etime-plan.stime).seconds / (24*3600) for plan in self.plans}
+        free_time = 1 - sum(dic.values())
+        dic.update({'Free Time': free_time})
+        print('free time', free_time)
         # print(dic)
         fig, ax = plt.subplots(figsize=(8, 8))
         plt.title(self.day_name)
         patches, labels, pct_texts = ax.pie(
             dic.values(), labels=dic.keys(),
             autopct=lambda pct: formattxt_pie(pct),#'%1.1f%%',
-            startangle=90, normalize=False, colors=colors, rotatelabels=True,
+            startangle=90, normalize=False, colors=colors+[(0.8, 1, 1)], rotatelabels=True,
             pctdistance=0.7)
         for label, pct_text in zip(labels, pct_texts):
             rotation = label.get_rotation()
