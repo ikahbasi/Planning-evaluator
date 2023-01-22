@@ -41,7 +41,7 @@ class Day:
                 continue
             try:
                 if (plan.stime < self.plans[indx-1].etime) or (plan.etime > self.plans[indx+1].stime):
-                    print(plan.name, plan.offset, plan.stime, plan.etime)
+                    # print(plan.name, plan.offset, plan.stime, plan.etime)
                     plan.offset = self.plans[indx-1].offset + 0.05
                 # if (self.lst_stimes[ii] < self.lst_etimes[ii-1]) or (self.lst_etimes[ii] > self.lst_stimes[ii+1]):
                 #     self.plan[self.lst_works[ii]].offset = offset
@@ -53,8 +53,6 @@ class Day:
         dic = {plan.name: (plan.etime-plan.stime).seconds / (24*3600) for plan in self.plans}
         free_time = 1 - sum(dic.values())
         dic.update({'Free Time': free_time})
-        print('free time', free_time)
-        # print(dic)
         fig, ax = plt.subplots(figsize=(8, 8))
         plt.title(self.day_name)
         patches, labels, pct_texts = ax.pie(
@@ -202,11 +200,11 @@ class Week:
         self._sort_plans()
 
 
-    def update_plans(self, newplans, target_day=[]):
-        for name, day in self.__dict__.items():
-            if name in target_day:
-                for action in newplans:
-                    day.add_action(*action)
+    def update_plans(self, plans):
+        for plan in plans:
+            day = plan[0]
+            action = plan[1:]
+            exec(f"self.{day}.add_action(*{action})")
         self._sort_plans()
 
     

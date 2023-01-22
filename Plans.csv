@@ -1,0 +1,24 @@
+day,name,stime,etime
+Routine,Sleep,00:00:00,06:45:00
+Routine,Weakup,06:45:00,07:00:00
+Routine,Breakfast1,07:00:00,07:30:00
+Routine,Breakfast2,09:00:00,09:15:00
+Routine,Launch,12:45:00,13:45:00
+Routine,Teatime,15:30:00,16:30:00
+Routine,Dinner,23:00:00,23:30:00
+Routine,BUSUU,21:00:00,22:00:00
+
+Saturday,DL,09:15:00,12:45:00
+
+Sunday,DL,09:15:00,12:45:00
+
+Monday,DL,09:15:00,12:45:00
+Monday,4 Friends,20:30:00,22:30:00
+
+Tuesday,DL,09:15:00,12:45:00
+
+Wednesday,DL,09:15:00,12:45:00
+
+Thursday,DL,09:15:00,12:45:00
+
+Friday,DL,09:15:00,12:45:00
