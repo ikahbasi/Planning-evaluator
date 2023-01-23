@@ -186,24 +186,27 @@ class Week:
         for label, pct_text in zip(labels, pct_texts):
             rotation = label.get_rotation()
             pct_text.set_rotation(rotation)
-        plt.show()
-        
-        
+        plt.show()        
 
 
-    def update_routine(self, routines, except_day=[]):
+    def update_plans(self, all_plans):
+        routines = all_plans[all_plans['day']=='Routine']
+        routines = [tuple(action[1:]) for action in routines.values.tolist()]
         for name, day in self.__dict__.items():
-            if name in except_day:
-                continue
-            for action in routines:
+            for routine in routines:
+                action = routine[:-1]
+                exceptions = routine[-1].split(';')
+                print(action, exceptions)
+                if name in exceptions:
+                    continue
                 day.add_action(*action)
-        self._sort_plans()
-
-
-    def update_plans(self, plans):
+        #
+        plans = all_plans[all_plans['day']!='Routine']
+        plans = [tuple(action) for action in plans.values.tolist()]
         for plan in plans:
             day = plan[0]
-            action = plan[1:]
+            action = plan[1:-1]
+            print(day, action)
             exec(f"self.{day}.add_action(*{action})")
         self._sort_plans()
 
